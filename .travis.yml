@@ -10,8 +10,8 @@ deploy:
   api_key:
     secure: "SmTt7KWb//2UGHze5qv7mlza+aZD6gA0NyOHYNW/jV5ypAo1aHX1cKqdrLjzxgIdyiBDPn5myfB5gxLNPegBcEZXNLS3eAWEmpt1nX4YioGn1sQIb1Lymk1GA/9HU6pFtzXU/a7JR4P/cii/77G38WDZjASn4DWHB1lA2W5LwqCuQjtkrFfT+XOtSc/5ZESQHLSz860TtvJ+8F5GX1SHIKoHsKDiuWM4P3M2gR8LTzK7+KBJ/3DzFYDaWJ3cdixqR9XfM9mbTr6Mc6OgNkf8aFjjP1cxaXNCVg2YMLAwc5+BZp2ZFnYnLTiIHLWN2jS7nmcXo6kzNJISuLYVDS8iS4x+YavcMJeEu0HRI2xH14xfvxz6keDJqaImyyAhrIILSHra6cJ/bPh9Xxj/q5v3FzXApbNIdzozAOmh2RwDfwsI3kdzyk/qoZWtFwl3i0G8LVjZ1fUbzuYTDtFUsIerd2QwTZFRtu9jABef68HE4vY/eck4268jY8Xc8kKwavbJBg6KemI3yy2bpOCEjUtaef59d9lTC63TORJLevprXNWaTV7l1Du08klyq9IjL4+ZiilQ3a1Tczg7H0rPKaFv1MOUO/ytXx+S/wg2c944KRxSmlDXslWWF3ZuxHEC45oAjehaPzVyfJkKBgrGKXr7Al5rZqbTGZJfMhRC3LcO3Lw="
   file:
-  - bin/linux/jg
-  - bin/darwin/jg
+  - bin/jg-linux
+  - bin/jg-darwin
   skip_cleanup: true
   on:
     tags: true
