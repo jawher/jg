@@ -9,13 +9,21 @@ import (
 
 	"bytes"
 
-	"github.com/docker/notary/Godeps/_workspace/src/github.com/jfrazelle/go/canonical/json"
+	"encoding/json"
+
 	"github.com/jawher/mow.cli"
+)
+
+var (
+	version   string
+	gitCommit string
+	buildDate string
 )
 
 func main() {
 	app := cli.App("jg", "a CLI to generate JSON")
 	app.LongDesc = HELP
+	app.Version("v version", fmt.Sprintf("%s [sha: %s, time: %s]", version, gitCommit, buildDate))
 
 	app.Spec = "[-p] GENERATORS..."
 	var (
