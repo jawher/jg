@@ -44,6 +44,14 @@ This produces the following JSON
 
 Which can then be fed to other tools (httpie for example).
 
+## Installation
+
+Head to [the releases page](https://github.com/jawher/jg/releases/latest) and grab the latest build for your platform.
+For the time being, you'll have to rename the downloaded file from `jg-${platform}` to just `jg`.
+Move it somewhere in your `PATH` and ensure that it is executable.
+
+An alternative way if you have go installed is to run `go install github.com/jawher/jg`
+
 ## Generators
 
 The generator expressions syntax resembles the JSON syntax with a few caveats:
