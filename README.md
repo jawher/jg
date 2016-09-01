@@ -12,7 +12,7 @@ httpie comes with handy support for generating the JSON body of outgoing request
 
 However, this support is pretty basic and suffers from several limitations:
 
-* The generated JSON is only one level deep (jkbrzt/httpie/issues#78)
+* The generated JSON is only one level deep (jkbrzt/httpie#78)
 * Bare bone support for arrays
 
 Out of frustration with these issues, I ended up writing `jg` to solve them.
