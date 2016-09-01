@@ -15,6 +15,7 @@ const (
 	tkArrEnd     tokenClass = "]"
 	tkDot        tokenClass = "."
 	tkLiteral    tokenClass = "LITERAL"
+	tkVar        tokenClass = "VAR"
 	tkRawLiteral tokenClass = ":LITERAL"
 	tkAssign     tokenClass = "="
 	tkEOF        tokenClass = "$"
@@ -69,13 +70,16 @@ func (lx *lexer) next() token {
 		case r == ':':
 			lx.drop()
 			return lx.lexRawLiteral()
+		case r == '$':
+			lx.drop()
+			return lx.lexVariable()
 		default:
 			return lx.lexLiteral()
 		}
 	}
 }
 
-var notOkInLiteral = []rune{eof, ' ', '\t', '{', '}', '[', ']', '=', '\n', '.'}
+var notOkInLiteral = []rune{eof, ' ', '\t', '{', '}', '[', ']', '=', '$', '\n', '.'}
 
 func (lx *lexer) lexLiteral() token {
 	for notIn(lx.peek(), notOkInLiteral) {
@@ -85,7 +89,15 @@ func (lx *lexer) lexLiteral() token {
 	return lx.emit(tkLiteral)
 }
 
-var notOkInRawLiteral = []rune{eof, ' ', '\t', '{', '}', '[', ']', '=', '\n'}
+func (lx *lexer) lexVariable() token {
+	for notIn(lx.peek(), notOkInLiteral) {
+		lx.pop()
+	}
+
+	return lx.emit(tkVar)
+}
+
+var notOkInRawLiteral = []rune{eof, ' ', '\t', '{', '}', '[', ']', '=', '$', '\n'}
 
 func (lx *lexer) lexRawLiteral() token {
 	for notIn(lx.peek(), notOkInRawLiteral) {

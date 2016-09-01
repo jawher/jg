@@ -24,13 +24,30 @@ func TestValue(t *testing.T) {
 	for _, cas := range cases {
 		v := Value{value: cas}
 
-		require.Equal(t, cas, v.Gen())
+		require.Equal(t, cas, v.Gen(nil))
 
 		for _, otherGen := range otherGens {
 			// Merge of a value wih another generator should always return the other
 			require.Equal(t, otherGen, v.Merge(otherGen))
 		}
 	}
+}
+
+func TestVar(t *testing.T) {
+	v := Var{varName: "a"}
+
+	require.Equal(t, "b", v.Gen(map[string]Any{"a": "b"}))
+
+	otherGens := []Generator{
+		NewObj(),
+		Arr{},
+		Value{value: 42},
+	}
+	for _, otherGen := range otherGens {
+		// Merge of a var wih another generator should always return the other
+		require.Equal(t, otherGen, v.Merge(otherGen))
+	}
+
 }
 
 func TestArr(t *testing.T) {
@@ -41,7 +58,7 @@ func TestArr(t *testing.T) {
 		g.Add(Value{value: v})
 	}
 
-	require.Equal(t, values, g.Gen())
+	require.Equal(t, values, g.Gen(nil))
 
 	otherGens := []Generator{
 		NewObj(),
@@ -68,7 +85,7 @@ func TestObj(t *testing.T) {
 		g.Add(field, Value{value: value})
 	}
 
-	require.Equal(t, fields, g.Gen())
+	require.Equal(t, fields, g.Gen(nil))
 }
 
 func TestObjMerge(t *testing.T) {

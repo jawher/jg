@@ -71,6 +71,7 @@ Adds a field named `field` to the current object.
 
 The value can be one of:
 * Literal: will be treated a string by default, unless prefixed with `:` (for numbers, booleans and `null`)
+* Variable: prefixed with the `$` sign, e.g. ``$name`. Will be replaced by its value (a variable can be set using the `-s` flag)
 * Object generator: see below for details
 * Array generator: see below for details
 
@@ -78,7 +79,8 @@ EXAMPLES:
 
 * `name = foo`: adds a field to a JSON object named `foo` containing the string value `"foo"`
 * `age = :42` : prefixing a value with `:` instructs `jg` to handle it as a *raw* value, i.e. as a number, a boolean or as `null` and not treat it like a string
-  
+* `id = $x` : prefixing a value with `$` instructs `jg` to handle it as a variable.
+
 ### Dotted field
 
 SYNTAX: `parent.child = value`
@@ -115,13 +117,14 @@ To set the array elements, specify the required generator expressions inside the
 The accepted generators are:
 
 * literal: will be added as is to the array
+* variable: a name prefixed with the `$` sign. Its value will be added as is to the array
 * field generator: will add a JSON object containing the generated field as an element
 * object generator: will add a the generated JSON object as an element
 * array generator: will add a the generated JSON array as an element
 
 EXAMPLES:
 
-* `tags = [ foo bar qix ]`: creates an array containing the 3 strings `"foo"`, `"bar"` and `"qix"`.
+* `tags = [ foo bar qix $x ]`: creates an array containing the 3 strings `"foo"`, `"bar"` and `"qix"` and the value of the `x` variable.
 * `ids = [ :1 :2 :3 ]`: prefix the literals with `:` to handle them as *raw*, i.e. number values
 * `results = [ id=:1 id=:2]`: creates an array containing 2 objects, each with one field named `id`
 * `results = [ {id=:1 name=foo} {id=:2 name=bar}]`: creates an array containing 2 objects, each with 2 fields `id` and `name`
@@ -132,6 +135,19 @@ EXAMPLES:
 
 By default, `jg` outputs unindented JSON in a single line.
 The `-p` can be used to instruct `jg` to pretty-print the generated JSON.
+
+### Substitutions
+
+The `-s` flag can be used to declare one or more substitutions:
+
+`jg -s x=World '[ hello $x]'`
+
+Whenever `$x` is encountered in the generator expressions, it will be replaced with the string `"World"`.
+
+A substitution value can be one of:
+
+* Literal: The value will be stored as a string
+* Raw literal: Using `:` as prefix (for numbers, booleans and `null`)
 
 ### One object mode
 Calling `jg` with one or multiple field generators (`field = value`) results in producing a single JSON object

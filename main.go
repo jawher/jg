@@ -25,28 +25,35 @@ func main() {
 	app.LongDesc = HELP
 	app.Version("v version", fmt.Sprintf("%s [sha: %s, time: %s]", version, gitCommit, buildDate))
 
-	app.Spec = "[-p] GENERATORS..."
-	var (
-		prettyPrint = app.Bool(cli.BoolOpt{
-			Name: "p pretty-print",
-			Desc: "Pretty print the generated JSON",
-		})
-		generators = app.Strings(cli.StringsArg{
-			Name: "GENERATORS",
-			Desc: "Generator expressions",
-		})
-	)
+	app.Spec = "[-p] [-s...] GENERATORS..."
+
+	prettyPrint := app.Bool(cli.BoolOpt{
+		Name: "p pretty-print",
+		Desc: "Pretty print the generated JSON",
+	})
+
+	substitutions := Substitutions{}
+	app.Var(cli.VarOpt{
+		Name:  "s substitution",
+		Desc:  "Substition in the format name=value where value can be a literal (string) or a raw literal (prefixed by ':', e.g. :true, :42, :null)",
+		Value: &substitutions,
+	})
+
+	generators := app.Strings(cli.StringsArg{
+		Name: "GENERATORS",
+		Desc: "Generator expressions",
+	})
 
 	app.Action = func() {
 		spec := strings.Join(*generators, " ")
-		parsedGenerators, err := Parse(spec)
+		parsedGenerators, err := ParseGenerators(spec)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			cli.Exit(1)
 		}
 
 		for _, g := range parsedGenerators {
-			output, _ := json.Marshal(g.Gen())
+			output, _ := json.Marshal(g.Gen(substitutions))
 			if *prettyPrint {
 				var indentedOutput bytes.Buffer
 				json.Indent(&indentedOutput, output, "", "\t")
@@ -57,6 +64,42 @@ func main() {
 	}
 
 	app.Run(os.Args)
+}
+
+type Substitutions map[string]Any
+
+func (s *Substitutions) Set(v string) error {
+	parts := strings.SplitN(v, "=", 2)
+
+	if len(parts) != 2 {
+		return fmt.Errorf("Invalid substitution %s: should be in the form name=value", v)
+	}
+
+	varName := parts[0]
+	varValue, err := ParseSubstValue(parts[1])
+	if err != nil {
+		return err
+	}
+	(*s)[varName] = varValue
+	return nil
+}
+
+func (s *Substitutions) String() string {
+	res := ""
+	sep := ""
+	for name, value := range *s {
+		res += fmt.Sprintf("%s%s=%q", sep, name, value)
+		sep = ", "
+	}
+	return res
+}
+
+func (s *Substitutions) IsMulti() bool {
+	return true
+}
+
+func (s *Substitutions) Clear() {
+	*s = map[string]Any{}
 }
 
 const HELP = `jg - a CLI tool to generate JSON

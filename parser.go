@@ -26,18 +26,28 @@ func (e ParseError) Error() string {
 }
 
 /*
-Parse accepts an input string and the list and types of valid fields and returns either a matcher expression if the query
-is valid, or else an error
+Parse accepts an input string and returns a list of generators or an error
 */
-func Parse(input string) ([]Generator, error) {
+func ParseGenerators(input string) ([]Generator, error) {
 	lexer := newLexer(input)
 	return (&parser{
 		lexer: lexer,
 		next:  lexer.next(),
-	}).parse()
+	}).parseGenerators()
 }
 
-func (p *parser) parse() (gen []Generator, err error) {
+/*
+Parse accepts an input string and returns a parsed value for a substitution or an error
+*/
+func ParseSubstValue(input string) (Any, error) {
+	lexer := newLexer(input)
+	return (&parser{
+		lexer: lexer,
+		next:  lexer.next(),
+	}).parseSubstValue()
+}
+
+func (p *parser) parseGenerators() (gen []Generator, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			gen = nil
@@ -49,6 +59,41 @@ func (p *parser) parse() (gen []Generator, err error) {
 		}
 	}()
 	gen = p.start()
+	if !p.found(tkEOF) {
+		p.advance()
+		panic("Unexpected input")
+	}
+	return
+}
+
+func (p *parser) parseSubstValue() (res Any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			res = nil
+			err = ParseError{
+				Input:   p.lexer.input,
+				Pos:     p.matched.pos,
+				Message: fmt.Sprintf("%v", r),
+			}
+		}
+	}()
+
+	switch {
+	case p.found(tkLiteral):
+		res = p.matched.value
+	case p.found(tkRawLiteral):
+		rawValue, err := parseRawValue(p.matched.value)
+		if err != nil {
+			panic("Invalid literal")
+		}
+		res = rawValue
+	case p.found(tkEOF):
+		panic("Unexpected end of input")
+	default:
+		p.advance()
+		panic("Unexpected input")
+	}
+
 	if !p.found(tkEOF) {
 		p.advance()
 		panic("Unexpected input")
@@ -113,6 +158,8 @@ func (p *parser) arr() Generator {
 			} else {
 				res.Add(Value{value: p.matched.value})
 			}
+		case p.found(tkVar):
+			res.Add(Var{varName: p.matched.value})
 		case p.found(tkObjStart):
 			res.Add(p.obj())
 			//Add obj as array elem
@@ -129,7 +176,6 @@ func (p *parser) arr() Generator {
 			panic("Unexpected input")
 		}
 	}
-	return nil
 }
 
 func (p *parser) field(field string) Generator {
@@ -154,6 +200,8 @@ func (p *parser) value() Generator {
 	switch {
 	case p.found(tkLiteral):
 		return Value{value: p.matched.value}
+	case p.found(tkVar):
+		return Var{varName: p.matched.value}
 	case p.found(tkRawLiteral):
 		rawValue, err := parseRawValue(p.matched.value)
 		if err != nil {

@@ -52,12 +52,16 @@ func TestParseFieldGenerator(t *testing.T) {
 			input:    `a=:null`,
 			expected: oneFieldObjGen("a", nil),
 		},
+		{
+			input:    `a=$b`,
+			expected: NewObj().Add("a", Var{varName: "b"}),
+		},
 	}
 
 	for _, cas := range testCases {
 		t.Logf("Testing input: %s", cas.input)
 
-		ast, err := Parse(cas.input)
+		ast, err := ParseGenerators(cas.input)
 
 		require.NoError(t, err)
 		require.Equal(t, []Generator{cas.expected}, ast)
@@ -86,7 +90,7 @@ func TestParseObjectGenerator(t *testing.T) {
 	for _, cas := range testCases {
 		t.Logf("Testing input: %s", cas.input)
 
-		ast, err := Parse(cas.input)
+		ast, err := ParseGenerators(cas.input)
 
 		require.NoError(t, err)
 		require.Equal(t, []Generator{cas.expected}, ast)
@@ -132,7 +136,35 @@ func TestParseDotObjectGenerator(t *testing.T) {
 	for _, cas := range testCases {
 		t.Logf("Testing input: %s", cas.input)
 
-		ast, err := Parse(cas.input)
+		ast, err := ParseGenerators(cas.input)
+
+		require.NoError(t, err)
+		require.Equal(t, []Generator{cas.expected}, ast)
+	}
+}
+
+func TestParseArrayGenerator(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected Generator
+	}{
+		{
+			input: `[:42 42 :null $item a=b {c=d}]`,
+			expected: Arr{
+				Value{value: int64(42)},
+				Value{value: "42"},
+				Value{value: nil},
+				Var{varName: "item"},
+				NewObj().Add("a", Value{value: "b"}),
+				NewObj().Add("c", Value{value: "d"}),
+			},
+		},
+	}
+
+	for _, cas := range testCases {
+		t.Logf("Testing input: %s", cas.input)
+
+		ast, err := ParseGenerators(cas.input)
 
 		require.NoError(t, err)
 		require.Equal(t, []Generator{cas.expected}, ast)
@@ -142,7 +174,7 @@ func TestParseDotObjectGenerator(t *testing.T) {
 func TestComplexParse(t *testing.T) {
 	expected := Obj{
 		fields: Fields{
-			"id":      Value{value: "42"},
+			"id":      Var{varName: "id"},
 			"enabled": Value{value: true},
 			"caller": Obj{
 				fields: Fields{
@@ -167,8 +199,41 @@ func TestComplexParse(t *testing.T) {
 		},
 	}
 
-	ast, err := Parse(`id = 42 caller.gender.code = :1  customer={name = "Geralt" age  = 86 address.zip = 75018 } enabled = :true`)
+	ast, err := ParseGenerators(`id = $id caller.gender.code = :1  customer={name = "Geralt" age  = 86 address.zip = 75018 } enabled = :true`)
 
 	require.NoError(t, err)
 	require.Equal(t, []Generator{expected}, ast)
+}
+
+func TestParseSubstValue(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected Any
+	}{
+		{
+			input:    `true`,
+			expected: "true",
+		},
+		{
+			input:    `:true`,
+			expected: true,
+		},
+		{
+			input:    `:false`,
+			expected: false,
+		},
+		{
+			input:    `:42`,
+			expected: int64(42),
+		},
+	}
+
+	for _, cas := range testCases {
+		t.Logf("Testing input: %s", cas.input)
+
+		val, err := ParseSubstValue(cas.input)
+
+		require.NoError(t, err)
+		require.Equal(t, cas.expected, val)
+	}
 }

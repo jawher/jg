@@ -6,7 +6,7 @@ import (
 )
 
 type Generator interface {
-	Gen() Any
+	Gen(map[string]Any) Any
 	Merge(Generator) Generator
 }
 
@@ -16,12 +16,25 @@ type Value struct {
 	value Any
 }
 
-func (v Value) Gen() Any {
+func (v Value) Gen(substs map[string]Any) Any {
 	return v.value
 }
 
 func (v Value) Merge(g Generator) Generator {
 	// Values cannot be merged. Return the new one
+	return g
+}
+
+type Var struct {
+	varName string
+}
+
+func (v Var) Gen(substs map[string]Any) Any {
+	return substs[v.varName]
+}
+
+func (v Var) Merge(g Generator) Generator {
+	// Vars cannot be merged. Return the new one
 	return g
 }
 
@@ -55,10 +68,10 @@ func (obj Obj) Merge(g Generator) Generator {
 	}
 }
 
-func (obj Obj) Gen() Any {
+func (obj Obj) Gen(substs map[string]Any) Any {
 	res := map[string]Any{}
 	for field, valueGen := range obj.fields {
-		res[field] = valueGen.Gen()
+		res[field] = valueGen.Gen(substs)
 	}
 	return res
 }
@@ -79,10 +92,10 @@ func (arr Arr) Merge(g Generator) Generator {
 	return g
 }
 
-func (arr Arr) Gen() Any {
+func (arr Arr) Gen(substs map[string]Any) Any {
 	res := make([]Any, len(arr))
 	for idx, elemGen := range arr {
-		res[idx] = elemGen.Gen()
+		res[idx] = elemGen.Gen(substs)
 	}
 	return res
 }

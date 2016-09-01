@@ -12,6 +12,7 @@ func TestLexerSingleTokens(t *testing.T) {
 		expected token
 	}{
 		{"a", token{class: tkLiteral, value: "a", pos: 0}},
+		{"$a", token{class: tkVar, value: "a", pos: 1}},
 		{"a/b", token{class: tkLiteral, value: "a/b", pos: 0}},
 		{`"a b"`, token{class: tkLiteral, value: "a b", pos: 1}},
 		{`"a.b"`, token{class: tkLiteral, value: "a.b", pos: 1}},
